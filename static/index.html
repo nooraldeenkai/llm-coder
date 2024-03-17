@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic FastAPI Frontend</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #131722;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 90%;
+        }
+
+        .conversation {
+            width: 25%;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-right: 20px;
+            color: #fff;
+        }
+
+        .conversation-heading {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .conversation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .conversation-item {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .input-container {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-box {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            font-size: 18px;
+            color: #fff;
+            border-radius: 10px;
+            resize: none;
+        }
+
+        .input-box::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+
+        .output-box {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #4CAF50;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .output {
+            font-size: 18px;
+            color: #4CAF50;
+        }
+
+        .feedback-btn {
+            background-color: #FF5722;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .feedback-btn:hover {
+            background-color: #E64A19;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .feedback-button {
+            background-color: transparent;
+            border: none;
+            margin: 0 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: white;
+            transition: color 0.3s ease;
+        }
+
+        .feedback-button:hover {
+            color: #FFD700;
+            /* Change color on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="conversation">
+            <h2 class="conversation-heading">Recent Conversations</h2>
+            <ul class="conversation-list">
+                <li class="conversation-item">Conversation 1</li>
+                <li class="conversation-item">Conversation 2</li>
+                <li class="conversation-item">Conversation 3</li>
+                <li class="conversation-item">Conversation 4</li>
+                <li class="conversation-item">Conversation 5</li>
+            </ul>
+        </div>
+        <div class="input-container">
+            <textarea id="input" class="input-box"
+                placeholder="Enter your prompt...">write a python code to calculate area of a triangle given its parameters</textarea>
+            <button onclick="submitInput()" class="submit-btn">Submit</button>
+            <textarea id="output" class="output-box"></textarea>
+            <div class="feedback-buttons">
+                <button class="feedback-button" onclick="provideFeedback('thumbs-up')">👍</button>
+                <button class="feedback-button" onclick="provideFeedback('thumbs-down')">👎</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function submitInput() {
+            const inputText = document.getElementById('input').value;
+            const response = await fetch('http://127.0.0.1:8000/get_answer?prompt=' + encodeURIComponent(inputText), {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'accept': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            const data = await response.json();
+            document.getElementById('output').innerHTML = data;
+        }
+
+        async function provideFeedback(feedback) {
+            const inputText = document.getElementById('input').value;
+            const outputText = document.getElementById('output').value;
+            const response = await fetch('http://127.0.0.1:8000/feedback', {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question: inputText,
+                    answer: outputText,
+                    feedback: feedback
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data)
+                alert('Feedback submitted successfully!');
+            } else {
+                alert('Failed to submit feedback.');
+            }
+        }
+    </script>
+</body>
+
+</html>
