@@ -1,8 +1,12 @@
 from openai import OpenAI
 from app.models import Feedback
+import os
+from dotenv import load_dotenv
 
 
-client = OpenAI(api_key='')
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=api_key)
 
 
 def get_answer(prompt):
@@ -12,8 +16,6 @@ def get_answer(prompt):
             "role": "system",
                     "content": "you're a smart coding assistant bot designed to generate code that adhere to the user's specifications.\
                                 You should only generate code that adheres to the user's specifications. \
-                                You should not generate code that is not related to the user's specifications. \
-                                You should not generate code that is not related to the user's specifications. \
                                 You should only generate the code and do not respond with any other messages. \
                                 "
         },
@@ -56,11 +58,3 @@ def submit_feedback(feedback: Feedback):
     )
 
     return response.choices[0].message.content
-
-
-def get_history():
-    return None
-
-
-def delete_history():
-    return None
