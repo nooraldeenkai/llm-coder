@@ -14,7 +14,7 @@ llm-coder is a web application that leverages a Large Language Model (LLM) such 
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/your_username/llm-coder.git
+    git clone https://github.com/nooraldeenkai/llm-coder.git
     ```
 
 2. Navigate to the project directory:
