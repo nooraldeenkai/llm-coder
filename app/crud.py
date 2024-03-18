@@ -1,36 +1,36 @@
 from sqlalchemy.orm import Session
 from app.models import History
-from app.schemas import HistorySchema
+from app.schemas import HistoryCreate
+from fastapi import FastAPI, HTTPException
 
 
-def get_history(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(History).offset(skip).limit(limit).all()
-
-
-def get_history_by_id(db: Session, history_id: int):
-    return db.query(History).filter(History.id == history_id).first()
-
-
-def create_history(db: Session, history: HistorySchema):
-    _history = history(question=history.question, answer=history.answer)
-    db.add(_history)
+def add_history(db: Session, history: HistoryCreate):
+    db_history = History(**history.dict())
+    db.add(db_history)
     db.commit()
-    db.refresh(_history)
-    return _history
+    db.refresh(db_history)
+    return db_history
+
+
+def get_history(db: Session):
+    return db.query(History).all()
 
 
 def remove_history(db: Session, history_id: int):
-    _history = get_history_by_id(db=db, history_id=history_id)
-    db.delete(_history)
-    db.commit()
+    history = db.query(History).filter(History.id == history_id).first()
+    if history:
+        db.delete(history)
+        db.commit()
+        return {"message": "History deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="History not found")
 
 
-def update_history(db: Session, history_id: int, question: str, answer: str):
-    _history = get_history_by_id(db=db, history_id=history_id)
-
-    _history.question = question
-    _history.answer = answer
-
-    db.commit()
-    db.refresh(_history)
-    return _history
+def update_feedback(db: Session, response_id: int, feedback: str):
+    db_response = db.query(History).filter(
+        History.id == response_id).first()
+    if db_response:
+        db_response.feedback = feedback
+        db.commit()
+        return db_response
+    return None
