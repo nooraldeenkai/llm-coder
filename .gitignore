@@ -1,4 +1,4 @@
 coder/
-
-
+.env
+*.db
 __pycache__/
