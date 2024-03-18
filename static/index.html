@@ -156,17 +156,10 @@
     <div class="container">
         <div class="conversation">
             <h2 class="conversation-heading">Recent Conversations</h2>
-            <ul class="conversation-list">
-                <li class="conversation-item">Conversation 1</li>
-                <li class="conversation-item">Conversation 2</li>
-                <li class="conversation-item">Conversation 3</li>
-                <li class="conversation-item">Conversation 4</li>
-                <li class="conversation-item">Conversation 5</li>
-            </ul>
+            <ul id="conversation-list" class="conversation-list"></ul>
         </div>
         <div class="input-container">
-            <textarea id="input" class="input-box"
-                placeholder="Enter your prompt...">write a python code to calculate area of a triangle given its parameters</textarea>
+            <textarea id="input" class="input-box" placeholder="Enter your prompt..."></textarea>
             <button onclick="submitInput()" class="submit-btn">Submit</button>
             <textarea id="output" class="output-box"></textarea>
             <div class="feedback-buttons">
@@ -179,7 +172,7 @@
     <script>
         async function submitInput() {
             const inputText = document.getElementById('input').value;
-            const response = await fetch('http://127.0.0.1:8000/get_answer?prompt=' + encodeURIComponent(inputText), {
+            const response = await fetch('http://127.0.0.1:8003/get_answer?prompt=' + encodeURIComponent(inputText), {
                 method: 'POST',
                 mode: 'cors',
                 headers: {
@@ -191,29 +184,111 @@
             document.getElementById('output').innerHTML = data;
         }
 
-        async function provideFeedback(feedback) {
-            const inputText = document.getElementById('input').value;
-            const outputText = document.getElementById('output').value;
-            const response = await fetch('http://127.0.0.1:8000/feedback', {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    question: inputText,
-                    answer: outputText,
-                    feedback: feedback
-                })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data)
-                alert('Feedback submitted successfully!');
-            } else {
-                alert('Failed to submit feedback.');
+        async function provideFeedback(feedback, id) {
+                const response = await fetch('http://127.0.0.1:8003/feedback', {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        feedback: feedback
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+                    alert('Feedback submitted successfully!');
+                } else {
+                    alert('Failed to submit feedback.');
+                }
+            }
+
+        // Function to fetch and display conversation history
+        async function displayConversationHistory() {
+            try {
+                const response = await fetch('http://127.0.0.1:8003/get_history');
+                if (response.ok) {
+                    const data = await response.json();
+                    const tableContainer = document.getElementById('conversation-list');
+                    tableContainer.innerHTML = ''; // Clear previous content
+                    const table = document.createElement('table');
+                    table.classList.add('conversation-table');
+
+                    // Create table header
+                    const headerRow = document.createElement('tr');
+                    const headerId = document.createElement('th');
+                    headerId.textContent = 'ID';
+                    const headerQuestion = document.createElement('th');
+                    headerQuestion.textContent = 'Question';
+                    const headerAnswer = document.createElement('th');
+                    headerAnswer.textContent = 'Answer';
+                    const headerAction = document.createElement('th');
+                    headerAction.textContent = 'Action';
+                    headerRow.appendChild(headerId);
+                    headerRow.appendChild(headerQuestion);
+                    headerRow.appendChild(headerAnswer);
+                    headerRow.appendChild(headerAction);
+                    table.appendChild(headerRow);
+
+                    // Populate table with data
+                    data.forEach((conversation, index) => {
+                        const row = document.createElement('tr');
+                        const cellId = document.createElement('td');
+                        cellId.textContent = index + 1;
+                        const cellQuestion = document.createElement('td');
+                        cellQuestion.textContent = conversation.question;
+                        const cellAnswer = document.createElement('td');
+                        cellAnswer.textContent = conversation.answer;
+                        const cellAction = document.createElement('td');
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => deleteRow(conversation.id);
+                        cellAction.appendChild(deleteButton);
+                        row.appendChild(cellId);
+                        row.appendChild(cellQuestion);
+                        row.appendChild(cellAnswer);
+                        row.appendChild(cellAction);
+                        table.appendChild(row);
+                    });
+
+                    tableContainer.appendChild(table);
+                } else {
+                    console.error('Failed to fetch conversation history');
+                }
+            } catch (error) {
+                console.error('Error fetching conversation history:', error);
             }
         }
+
+        // Function to delete row by ID
+        async function deleteRow(id) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8003/delete_history?history_id=${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'accept': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    // Refresh conversation history after deletion
+                    displayConversationHistory();
+                } else {
+                    console.error('Failed to delete conversation');
+                }
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+            }
+        }
+
+        // Call the function to display conversation history when the page loads
+        window.onload = () => {
+            displayConversationHistory();
+            // Call displayConversationHistory every 5 seconds
+            setInterval(displayConversationHistory, 500)
+        };
     </script>
 </body>
 
