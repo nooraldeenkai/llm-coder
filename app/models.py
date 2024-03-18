@@ -1,14 +1,5 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String
-from app.config import Base
-from pydantic import BaseModel
-
-
-class Feedback(BaseModel):
-    question: str
-    answer: str
-    feedback: str
-
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 

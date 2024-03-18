@@ -110,25 +110,6 @@
             color: #4CAF50;
         }
 
-        .feedback-btn {
-            background-color: #FF5722;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .feedback-btn:hover {
-            background-color: #E64A19;
-        }
-
         .feedback-buttons {
             display: flex;
             justify-content: center;
@@ -149,6 +130,43 @@
             color: #FFD700;
             /* Change color on hover */
         }
+
+        /* Updated Styles for Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #4CAF50;
+            color: #fff;
+        }
+
+        th {
+            background-color: #4CAF50;
+        }
+
+        td {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .action-buttons button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            margin-right: 10px;
+            color: #fff;
+        }
+
+        .action-buttons button:hover {
+            color: #FFD700;
+        }
     </style>
 </head>
 
@@ -162,10 +180,6 @@
             <textarea id="input" class="input-box" placeholder="Enter your prompt..."></textarea>
             <button onclick="submitInput()" class="submit-btn">Submit</button>
             <textarea id="output" class="output-box"></textarea>
-            <div class="feedback-buttons">
-                <button class="feedback-button" onclick="provideFeedback('thumbs-up')">👍</button>
-                <button class="feedback-button" onclick="provideFeedback('thumbs-down')">👎</button>
-            </div>
         </div>
     </div>
 
@@ -185,28 +199,25 @@
         }
 
         async function provideFeedback(feedback, id) {
-                const response = await fetch('http://127.0.0.1:8003/feedback', {
+            try {
+                const response = await fetch(`http://127.0.0.1:8003/history/${id}/feedback?feedback=` + encodeURIComponent(feedback), {
                     method: 'POST',
-                    mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        id: id,
-                        feedback: feedback
                     })
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log(data);
                     alert('Feedback submitted successfully!');
                 } else {
                     alert('Failed to submit feedback.');
                 }
+            } catch (error) {
+                console.error('Error providing feedback:', error);
             }
+        }
 
-        // Function to fetch and display conversation history
         async function displayConversationHistory() {
             try {
                 const response = await fetch('http://127.0.0.1:8003/get_history');
@@ -215,42 +226,48 @@
                     const tableContainer = document.getElementById('conversation-list');
                     tableContainer.innerHTML = ''; // Clear previous content
                     const table = document.createElement('table');
-                    table.classList.add('conversation-table');
 
                     // Create table header
                     const headerRow = document.createElement('tr');
-                    const headerId = document.createElement('th');
-                    headerId.textContent = 'ID';
-                    const headerQuestion = document.createElement('th');
-                    headerQuestion.textContent = 'Question';
-                    const headerAnswer = document.createElement('th');
-                    headerAnswer.textContent = 'Answer';
-                    const headerAction = document.createElement('th');
-                    headerAction.textContent = 'Action';
-                    headerRow.appendChild(headerId);
-                    headerRow.appendChild(headerQuestion);
-                    headerRow.appendChild(headerAnswer);
-                    headerRow.appendChild(headerAction);
+                    const headers = ['ID', 'Question', 'Answer', 'Action'];
+                    headers.forEach(headerText => {
+                        const header = document.createElement('th');
+                        header.textContent = headerText;
+                        headerRow.appendChild(header);
+                    });
                     table.appendChild(headerRow);
 
                     // Populate table with data
-                    data.forEach((conversation, index) => {
+                    data.forEach(conversation => {
                         const row = document.createElement('tr');
-                        const cellId = document.createElement('td');
-                        cellId.textContent = index + 1;
-                        const cellQuestion = document.createElement('td');
-                        cellQuestion.textContent = conversation.question;
-                        const cellAnswer = document.createElement('td');
-                        cellAnswer.textContent = conversation.answer;
-                        const cellAction = document.createElement('td');
+                        Object.values(conversation).forEach(value => {
+                            const cell = document.createElement('td');
+                            cell.textContent = value;
+                            row.appendChild(cell);
+                        });
+
+                        // Add action buttons
+                        const actionCell = document.createElement('td');
+
+                        // Thumbs up button
+                        const thumbsUpButton = document.createElement('button');
+                        thumbsUpButton.textContent = '👍';
+                        thumbsUpButton.onclick = () => provideFeedback('thumbs-up', conversation.id);
+                        actionCell.appendChild(thumbsUpButton);
+
+                        // Thumbs down button
+                        const thumbsDownButton = document.createElement('button');
+                        thumbsDownButton.textContent = '👎';
+                        thumbsDownButton.onclick = () => provideFeedback('thumbs-down', conversation.id);
+                        actionCell.appendChild(thumbsDownButton);
+
+                        // Delete button
                         const deleteButton = document.createElement('button');
                         deleteButton.textContent = 'Delete';
                         deleteButton.onclick = () => deleteRow(conversation.id);
-                        cellAction.appendChild(deleteButton);
-                        row.appendChild(cellId);
-                        row.appendChild(cellQuestion);
-                        row.appendChild(cellAnswer);
-                        row.appendChild(cellAction);
+                        actionCell.appendChild(deleteButton);
+
+                        row.appendChild(actionCell);
                         table.appendChild(row);
                     });
 
@@ -263,7 +280,6 @@
             }
         }
 
-        // Function to delete row by ID
         async function deleteRow(id) {
             try {
                 const response = await fetch(`http://127.0.0.1:8003/delete_history?history_id=${id}`, {
@@ -273,8 +289,8 @@
                     }
                 });
                 if (response.ok) {
-                    // Refresh conversation history after deletion
                     displayConversationHistory();
+                    alert('Conversation deleted successfully!');
                 } else {
                     console.error('Failed to delete conversation');
                 }
@@ -283,11 +299,9 @@
             }
         }
 
-        // Call the function to display conversation history when the page loads
         window.onload = () => {
             displayConversationHistory();
-            // Call displayConversationHistory every 5 seconds
-            setInterval(displayConversationHistory, 500)
+            setInterval(displayConversationHistory, 500); // Refresh every 5 seconds
         };
     </script>
 </body>

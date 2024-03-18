@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models import History
 from app.schemas import HistoryCreate
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
+from sqlalchemy import desc
 
 
 def add_history(db: Session, history: HistoryCreate):
@@ -10,6 +11,10 @@ def add_history(db: Session, history: HistoryCreate):
     db.commit()
     db.refresh(db_history)
     return db_history
+
+
+def get_history_last(db: Session):
+    return db.query(History).order_by(desc(History.id)).first()
 
 
 def get_history(db: Session):
@@ -26,11 +31,11 @@ def remove_history(db: Session, history_id: int):
         raise HTTPException(status_code=404, detail="History not found")
 
 
-def update_feedback(db: Session, response_id: int, feedback: str):
-    db_response = db.query(History).filter(
-        History.id == response_id).first()
-    if db_response:
-        db_response.feedback = feedback
+def update_feedback(db: Session, history_id: int, feedback: str):
+    db_history = db.query(History).filter(
+        History.id == history_id).first()
+    if db_history:
+        db_history.feedback = feedback
         db.commit()
-        return db_response
+        return db_history
     return None
