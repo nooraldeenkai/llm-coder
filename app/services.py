@@ -1,12 +1,10 @@
 from openai import OpenAI
 from app.models import History
-import os
-from dotenv import load_dotenv
+from app.config import OPENAI_API_KEY
 
 
-load_dotenv()
-api_key = os.getenv('OPENAI_API_KEY')
-client = OpenAI(api_key=api_key)
+client = OpenAI()
+client.api_key = OPENAI_API_KEY
 
 
 def get_answer(prompt, conv_history: dict,):
